@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import 'ai_service.dart';

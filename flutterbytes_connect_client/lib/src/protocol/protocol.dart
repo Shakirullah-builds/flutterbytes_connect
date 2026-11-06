@@ -11,6 +11,10 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:flutterbytes_connect_client/src/protocol/attendees/attendee_profile.dart'
+    as _it2yx83z;
+import 'package:flutterbytes_connect_client/src/protocol/matches/collab_match.dart'
+    as _i48r58af;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
@@ -44,6 +48,9 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_izw8z7ou.Greeting?>,
           _isc.getType<_ifq58cmo.CollabMatch?>,
           _isc.getType<List<String>>,
+          _isc.getType<List<String>>,
+          _isc.getType<List<_it2yx83z.AttendeeProfile>>,
+          _isc.getType<List<_i48r58af.CollabMatch>>,
         ],
         modules: const [
           _iaic.Protocol.new,
@@ -101,6 +108,21 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<_it2yx83z.AttendeeProfile>) {
+      return (data as List)
+              .map((e) => deserialize<_it2yx83z.AttendeeProfile>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i48r58af.CollabMatch>) {
+      return (data as List)
+              .map((e) => deserialize<_i48r58af.CollabMatch>(e))
+              .toList()
+          as T;
     }
     final modules = deserializationMetadata.modulesForDeserialization(
       t,
