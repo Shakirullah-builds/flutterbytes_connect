@@ -1,0 +1,44 @@
+services:
+  # Development services
+  postgres:
+    image: ghcr.io/serverpod/postgres:16
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: flutterbytes_connect
+      POSTGRES_PASSWORD: "WVNT8D75ICJoC_j__UStzsIk4ESJgskJ"
+    volumes:
+      - flutterbytes_connect_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6.2.6
+    ports:
+      - "8091:6379"
+    command: redis-server --requirepass "MNZKddVbAoDVOHZ3Rjchpm3HsYltunaX"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+  # Test services
+  postgres_test:
+    image: ghcr.io/serverpod/postgres:16
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: flutterbytes_connect_test
+      POSTGRES_PASSWORD: "7qd0N2-cd1LY8NXg3EM18RBMTw7gKr37"
+    volumes:
+      - flutterbytes_connect_test_data:/var/lib/postgresql/data
+
+  redis_test:
+    image: redis:6.2.6
+    ports:
+      - "9091:6379"
+    command: redis-server --requirepass "7LiA4JFkmggmZjyLgcIpQaVLncrBpl8o"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+volumes:
+  flutterbytes_connect_data:
+  flutterbytes_connect_test_data:
