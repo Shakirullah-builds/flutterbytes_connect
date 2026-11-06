@@ -16,8 +16,12 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'attendees/attendee_profile.dart' as _i8fwt9bw;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'matches/collab_match.dart' as _ifq58cmo;
+export 'attendees/attendee_profile.dart';
 export 'greetings/greeting.dart';
+export 'matches/collab_match.dart';
 export 'client.dart';
 
 class Protocol extends _isc.SerializationManager
@@ -33,14 +37,23 @@ class Protocol extends _isc.SerializationManager
       _isc.ProtocolDeserialization.cached(
         this,
         types: const [
+          _isc.getType<_i8fwt9bw.AttendeeProfile>,
           _isc.getType<_izw8z7ou.Greeting>,
+          _isc.getType<_ifq58cmo.CollabMatch>,
+          _isc.getType<_i8fwt9bw.AttendeeProfile?>,
           _isc.getType<_izw8z7ou.Greeting?>,
+          _isc.getType<_ifq58cmo.CollabMatch?>,
+          _isc.getType<List<String>>,
         ],
         modules: const [
           _iaic.Protocol.new,
           _iacc.Protocol.new,
         ],
-        classNames: const ['Greeting'],
+        classNames: const [
+          'AttendeeProfile',
+          'Greeting',
+          'CollabMatch',
+        ],
       );
 
   static String? getClassNameFromObjectJson(dynamic data) =>
@@ -67,11 +80,27 @@ class Protocol extends _isc.SerializationManager
       }
     }
 
+    if (t == _i8fwt9bw.AttendeeProfile) {
+      return _i8fwt9bw.AttendeeProfile.fromJson(data) as T;
+    }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _ifq58cmo.CollabMatch) {
+      return _ifq58cmo.CollabMatch.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_i8fwt9bw.AttendeeProfile?>()) {
+      return (data != null ? _i8fwt9bw.AttendeeProfile.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ifq58cmo.CollabMatch?>()) {
+      return (data != null ? _ifq58cmo.CollabMatch.fromJson(data) : null) as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     final modules = deserializationMetadata.modulesForDeserialization(
       t,
@@ -88,7 +117,9 @@ class Protocol extends _isc.SerializationManager
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _i8fwt9bw.AttendeeProfile => 'AttendeeProfile',
       _izw8z7ou.Greeting => 'Greeting',
+      _ifq58cmo.CollabMatch => 'CollabMatch',
       _ => null,
     };
   }
@@ -106,8 +137,12 @@ class Protocol extends _isc.SerializationManager
     }
 
     switch (data) {
+      case _i8fwt9bw.AttendeeProfile():
+        return 'AttendeeProfile';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _ifq58cmo.CollabMatch():
+        return 'CollabMatch';
     }
     className = _iaic.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -130,8 +165,14 @@ class Protocol extends _isc.SerializationManager
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'AttendeeProfile') {
+      return deserialize<_i8fwt9bw.AttendeeProfile>(data['data']);
+    }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'CollabMatch') {
+      return deserialize<_ifq58cmo.CollabMatch>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       return _iaic.Protocol().deserializeByClassName({

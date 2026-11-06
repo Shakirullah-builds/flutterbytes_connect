@@ -1,0 +1,12 @@
+class: AttendeeProfile
+table: attendee_profile
+fields:
+  name: String
+  role: String
+  skills: List<String>
+  interests: String
+  githubHandle: String?
+  personaTitle: String
+  bioHook: String
+  avatarSeed: int
+  createdAt: DateTime
