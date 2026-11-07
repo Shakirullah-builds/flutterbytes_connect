@@ -175,7 +175,7 @@ class _ClaimCardModalState extends State<ClaimCardModal> {
                 ),
                 const SizedBox(height: 24),
 
-                // Action
+                // Submit
                 FbcButton(
                   label: 'Synthesize & Publish to Wall',
                   icon: Icons.auto_awesome,
