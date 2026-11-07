@@ -2,22 +2,54 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import 'ai_service.dart';
 
-/// Gemini REST implementation utilizing `gemini-2.5-flash`.
+/// Gemini REST implementation with robust model fallback, JSON extraction,
+/// and comprehensive logging for debugging.
 class GeminiAiService implements AiService {
-  final String? _apiKey;
+  final String? _explicitApiKey;
   final http.Client _client;
 
   GeminiAiService({String? apiKey, http.Client? client})
-      : _apiKey = apiKey ?? Platform.environment['GEMINI_API_KEY'],
+      : _explicitApiKey = apiKey,
         _client = client ?? http.Client();
 
-  static const String _model = 'gemini-2.5-flash';
-  static const String _baseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent';
+  static const List<String> _candidateModels = [
+    'gemini-2.5-flash',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash',
+    'gemini-3.8-flash',
+  ];
+
+  String? _resolveApiKey() {
+    final explicit = _explicitApiKey;
+    if (explicit != null && explicit.trim().isNotEmpty) {
+      return explicit.trim();
+    }
+    final env = Platform.environment['GEMINI_API_KEY'];
+    if (env != null && env.trim().isNotEmpty) {
+      return env.trim();
+    }
+    try {
+      final pwd = Serverpod.instance.getPassword('GEMINI_API_KEY') ??
+          Serverpod.instance.getPassword('geminiApiKey');
+      if (pwd != null && pwd.trim().isNotEmpty) {
+        return pwd.trim();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  void _log(String message) {
+    stdout.writeln('[GeminiAiService] $message');
+  }
+
+  void _logError(String message) {
+    stderr.writeln('[GeminiAiService] $message');
+  }
 
   @override
   Future<PersonaResult> generatePersona({
@@ -26,7 +58,9 @@ class GeminiAiService implements AiService {
     required List<String> skills,
     required String interests,
   }) async {
-    if (_apiKey == null || _apiKey.trim().isEmpty) {
+    final apiKey = _resolveApiKey();
+    if (apiKey == null) {
+      _logError('WARNING: No GEMINI_API_KEY found in environment or passwords. Using fallback persona.');
       return _fallbackPersona(name, role, skills, interests);
     }
 
@@ -47,17 +81,20 @@ Return ONLY valid JSON matching this exact structure:
 ''';
 
     try {
-      final responseBody = await _callGemini(prompt);
-      final jsonMap = jsonDecode(responseBody) as Map<String, dynamic>;
+      _log('Requesting persona synthesis for "$name" ($role)...');
+      final responseBody = await _callGemini(prompt, apiKey);
+      final jsonMap = _extractJson(responseBody);
       final personaTitle = jsonMap['personaTitle'] as String? ?? 'Flutter Craftsman';
       final bioHook = jsonMap['bioHook'] as String? ??
           'Passionate developer building high-performance Flutter applications.';
 
+      _log('Persona synthesized successfully: "$personaTitle"');
       return PersonaResult(
         personaTitle: personaTitle.trim(),
         bioHook: bioHook.trim(),
       );
-    } catch (e) {
+    } catch (e, st) {
+      _logError('generatePersona failed: $e\n$st');
       return _fallbackPersona(name, role, skills, interests);
     }
   }
@@ -67,7 +104,9 @@ Return ONLY valid JSON matching this exact structure:
     required AttendeeProfile devOne,
     required AttendeeProfile devTwo,
   }) async {
-    if (_apiKey == null || _apiKey.trim().isEmpty) {
+    final apiKey = _resolveApiKey();
+    if (apiKey == null) {
+      _logError('WARNING: No GEMINI_API_KEY found in environment or passwords. Using fallback collab.');
       return _fallbackCollab(devOne, devTwo);
     }
 
@@ -100,10 +139,11 @@ Return ONLY valid JSON matching this exact structure:
 ''';
 
     try {
-      final responseBody = await _callGemini(prompt);
-      final jsonMap = jsonDecode(responseBody) as Map<String, dynamic>;
+      _log('Requesting collab match between "${devOne.name}" and "${devTwo.name}"...');
+      final responseBody = await _callGemini(prompt, apiKey);
+      final jsonMap = _extractJson(responseBody);
 
-      return CollabResult(
+      final result = CollabResult(
         projectTitle: jsonMap['projectTitle'] as String? ?? 'ByteSync Project',
         tagline: jsonMap['tagline'] as String? ??
             'A modern full-stack Flutter application powered by Serverpod.',
@@ -112,13 +152,15 @@ Return ONLY valid JSON matching this exact structure:
         devTwoResponsibility: jsonMap['devTwoResponsibility'] as String? ??
             'Develop Serverpod endpoints, database models, and real-time streams.',
       );
-    } catch (e) {
+      _log('Collab pitch synthesized: "${result.projectTitle}"');
+      return result;
+    } catch (e, st) {
+      _logError('generateCollabPitch failed: $e\n$st');
       return _fallbackCollab(devOne, devTwo);
     }
   }
 
-  Future<String> _callGemini(String prompt) async {
-    final uri = Uri.parse('$_baseUrl?key=$_apiKey');
+  Future<String> _callGemini(String prompt, String apiKey) async {
     final payload = {
       'contents': [
         {
@@ -133,36 +175,82 @@ Return ONLY valid JSON matching this exact structure:
       },
     };
 
-    final response = await _client
-        .post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(payload),
-        )
-        .timeout(const Duration(seconds: 12));
+    String? lastError;
 
-    if (response.statusCode != 200) {
-      throw HttpException(
-        'Gemini API error (${response.statusCode}): ${response.body}',
+    for (final model in _candidateModels) {
+      final uri = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
       );
+
+      try {
+        final response = await _client
+            .post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(payload),
+            )
+            .timeout(const Duration(seconds: 14));
+
+        if (response.statusCode == 200) {
+          final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+          final candidates = decoded['candidates'] as List<dynamic>?;
+          if (candidates == null || candidates.isEmpty) {
+            throw const FormatException('No candidates returned by Gemini');
+          }
+
+          final firstCandidate = candidates.first as Map<String, dynamic>;
+          final content = firstCandidate['content'] as Map<String, dynamic>?;
+          final parts = content?['parts'] as List<dynamic>?;
+          final text = parts?.first?['text'] as String?;
+
+          if (text == null || text.trim().isEmpty) {
+            throw const FormatException('Empty text content received from Gemini');
+          }
+
+          return text.trim();
+        } else {
+          lastError = 'HTTP ${response.statusCode} on model $model: ${response.body}';
+          _logError('$model returned status ${response.statusCode}: ${response.body}');
+          if (response.statusCode == 404 || response.statusCode == 400) {
+            continue;
+          }
+          break;
+        }
+      } catch (e) {
+        lastError = 'Error with $model: $e';
+        _logError('Call to $model failed: $e');
+      }
     }
 
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    final candidates = decoded['candidates'] as List<dynamic>?;
-    if (candidates == null || candidates.isEmpty) {
-      throw const FormatException('No candidates returned by Gemini');
+    throw HttpException('Gemini API call failed across all candidate models: $lastError');
+  }
+
+  Map<String, dynamic> _extractJson(String raw) {
+    var text = raw.trim();
+
+    // Strip markdown code fences (```json ... ``` or ``` ... ```)
+    if (text.startsWith('```json')) {
+      text = text.substring(7);
+    } else if (text.startsWith('```')) {
+      text = text.substring(3);
     }
-
-    final firstCandidate = candidates.first as Map<String, dynamic>;
-    final content = firstCandidate['content'] as Map<String, dynamic>?;
-    final parts = content?['parts'] as List<dynamic>?;
-    final text = parts?.first?['text'] as String?;
-
-    if (text == null || text.trim().isEmpty) {
-      throw const FormatException('Empty text content received from Gemini');
+    if (text.endsWith('```')) {
+      text = text.substring(0, text.length - 3);
     }
+    text = text.trim();
 
-    return text.trim();
+    try {
+      return jsonDecode(text) as Map<String, dynamic>;
+    } catch (_) {
+      // Robust fallback: find outermost JSON object bounds
+      final start = text.indexOf('{');
+      final end = text.lastIndexOf('}');
+      if (start != -1 && end != -1 && end > start) {
+        final substring = text.substring(start, end + 1);
+        return jsonDecode(substring) as Map<String, dynamic>;
+      }
+      rethrow;
+    }
   }
 
   PersonaResult _fallbackPersona(
