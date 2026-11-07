@@ -8,7 +8,7 @@ import '../generated/protocol.dart';
 import 'ai_service.dart';
 
 /// Gemini REST implementation with robust model fallback, JSON extraction,
-/// and comprehensive logging for debugging.
+/// retry on demand spikes (503/429), and comprehensive logging.
 class GeminiAiService implements AiService {
   final String? _explicitApiKey;
   final http.Client _client;
@@ -17,11 +17,12 @@ class GeminiAiService implements AiService {
       : _explicitApiKey = apiKey,
         _client = client ?? http.Client();
 
+  /// Primary modern models recommended by Google AI Studio, followed by low-latency lite fallbacks.
   static const List<String> _candidateModels = [
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-2.0-flash',
     'gemini-3.8-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
   ];
 
   String? _resolveApiKey() {
@@ -182,43 +183,61 @@ Return ONLY valid JSON matching this exact structure:
         'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
       );
 
-      try {
-        final response = await _client
-            .post(
-              uri,
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode(payload),
-            )
-            .timeout(const Duration(seconds: 14));
+      for (var attempt = 1; attempt <= 2; attempt++) {
+        try {
+          final response = await _client
+              .post(
+                uri,
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(payload),
+              )
+              .timeout(const Duration(seconds: 14));
 
-        if (response.statusCode == 200) {
-          final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-          final candidates = decoded['candidates'] as List<dynamic>?;
-          if (candidates == null || candidates.isEmpty) {
-            throw const FormatException('No candidates returned by Gemini');
+          if (response.statusCode == 200) {
+            final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+            final candidates = decoded['candidates'] as List<dynamic>?;
+            if (candidates == null || candidates.isEmpty) {
+              throw const FormatException('No candidates returned by Gemini');
+            }
+
+            final firstCandidate = candidates.first as Map<String, dynamic>;
+            final content = firstCandidate['content'] as Map<String, dynamic>?;
+            final parts = content?['parts'] as List<dynamic>?;
+            final text = parts?.first?['text'] as String?;
+
+            if (text == null || text.trim().isEmpty) {
+              throw const FormatException('Empty text content received from Gemini');
+            }
+
+            return text.trim();
           }
 
-          final firstCandidate = candidates.first as Map<String, dynamic>;
-          final content = firstCandidate['content'] as Map<String, dynamic>?;
-          final parts = content?['parts'] as List<dynamic>?;
-          final text = parts?.first?['text'] as String?;
-
-          if (text == null || text.trim().isEmpty) {
-            throw const FormatException('Empty text content received from Gemini');
-          }
-
-          return text.trim();
-        } else {
           lastError = 'HTTP ${response.statusCode} on model $model: ${response.body}';
-          _logError('$model returned status ${response.statusCode}: ${response.body}');
-          if (response.statusCode == 404 || response.statusCode == 400) {
+          _logError('$model (attempt $attempt) returned status ${response.statusCode}: ${response.body}');
+
+          // Spikes in demand (503 / 429): retry same model after short backoff
+          if ((response.statusCode == 503 || response.statusCode == 429) && attempt < 2) {
+            await Future.delayed(const Duration(milliseconds: 1200));
             continue;
           }
+
+          // Permanent Auth error: abort immediately
+          if (response.statusCode == 401 || response.statusCode == 403) {
+            throw HttpException('Gemini API authentication failed (${response.statusCode}): ${response.body}');
+          }
+
+          // Otherwise (404, 400, or persistent 503): break attempt loop to try next model
           break;
+        } catch (e) {
+          if (e is HttpException && e.message.contains('authentication failed')) {
+            rethrow;
+          }
+          lastError = 'Error with $model (attempt $attempt): $e';
+          _logError('Call to $model (attempt $attempt) failed: $e');
+          if (attempt < 2) {
+            await Future.delayed(const Duration(milliseconds: 1000));
+          }
         }
-      } catch (e) {
-        lastError = 'Error with $model: $e';
-        _logError('Call to $model failed: $e');
       }
     }
 

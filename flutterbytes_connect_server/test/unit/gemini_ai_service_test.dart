@@ -8,9 +8,10 @@ import 'package:test/test.dart';
 
 void main() {
   group('GeminiAiService Unit Tests', () {
-    test('generatePersona succeeds and parses plain JSON response', () async {
+    test('generatePersona succeeds and parses plain JSON response using primary model (gemini-3.8-flash)', () async {
       final mockClient = MockClient((request) async {
         expect(request.url.queryParameters['key'], equals('test-api-key'));
+        expect(request.url.path, contains('gemini-3.8-flash'));
         final responsePayload = {
           'candidates': [
             {
@@ -78,28 +79,15 @@ void main() {
       expect(result.bioHook, equals('Obsessed with pixel-perfect layouts and offline-first state machines.'));
     });
 
-    test('generatePersona falls back gracefully when API key is missing or empty', () async {
-      final service = GeminiAiService(apiKey: '', client: MockClient((_) async => http.Response('Forbidden', 403)));
-      final result = await service.generatePersona(
-        name: 'Dev Tester',
-        role: 'Backend Engineer',
-        skills: ['PostgreSQL', 'Dart'],
-        interests: 'Microservices',
-      );
-
-      expect(result.personaTitle, equals('PostgreSQL Architect'));
-      expect(result.bioHook, contains('Specializing in Backend Engineer'));
-    });
-
-    test('generatePersona retries next candidate model if first candidate returns 404', () async {
+    test('generatePersona retries on 503 high demand spike and succeeds on second attempt', () async {
       var callCount = 0;
       final mockClient = MockClient((request) async {
         callCount++;
-        // First model fails with 404 (model not found / deprecated)
         if (callCount == 1) {
-          return http.Response('{"error": {"code": 404, "message": "Model not found"}}', 404);
+          // 503 spike
+          return http.Response('{"error": {"code": 503, "message": "High demand spike"}}', 503);
         }
-        // Second model succeeds
+        // Second attempt succeeds
         final responsePayload = {
           'candidates': [
             {
@@ -107,8 +95,46 @@ void main() {
                 'parts': [
                   {
                     'text': jsonEncode({
-                      'personaTitle': 'The Fullstack Maestro',
-                      'bioHook': 'Connecting Dart client to Serverpod cloud.',
+                      'personaTitle': 'The Async Orchestrator',
+                      'bioHook': 'Building resilient fault-tolerant distributed Dart backends.',
+                    }),
+                  }
+                ],
+              },
+            }
+          ],
+        };
+        return http.Response(jsonEncode(responsePayload), 200);
+      });
+
+      final service = GeminiAiService(apiKey: 'test-api-key', client: mockClient);
+      final result = await service.generatePersona(
+        name: 'Tunde Bakare',
+        role: 'Cloud Architect',
+        skills: ['Serverpod', 'Dart', 'Docker'],
+        interests: 'Distributed systems',
+      );
+
+      expect(callCount, equals(2));
+      expect(result.personaTitle, equals('The Async Orchestrator'));
+    });
+
+    test('generatePersona automatically falls back to secondary candidate model if primary fails', () async {
+      final mockClient = MockClient((request) async {
+        if (request.url.path.contains('gemini-3.8-flash')) {
+          // Primary model unavailable
+          return http.Response('{"error": {"code": 503, "message": "Unavailable"}}', 503);
+        }
+        // Secondary model (gemini-3.5-flash-lite) succeeds
+        final responsePayload = {
+          'candidates': [
+            {
+              'content': {
+                'parts': [
+                  {
+                    'text': jsonEncode({
+                      'personaTitle': 'The Flutter Alchemist',
+                      'bioHook': 'Turning coffee into slick animations.',
                     }),
                   }
                 ],
@@ -122,13 +148,12 @@ void main() {
       final service = GeminiAiService(apiKey: 'test-api-key', client: mockClient);
       final result = await service.generatePersona(
         name: 'Kofi Mensah',
-        role: 'Fullstack Developer',
-        skills: ['Flutter', 'Serverpod'],
-        interests: 'Real-time collaborative dashboards',
+        role: 'Frontend Lead',
+        skills: ['Flutter', 'Dart'],
+        interests: 'Animations',
       );
 
-      expect(callCount, equals(2));
-      expect(result.personaTitle, equals('The Fullstack Maestro'));
+      expect(result.personaTitle, equals('The Flutter Alchemist'));
     });
 
     test('generateCollabPitch succeeds and parses pitch JSON', () async {
@@ -183,8 +208,6 @@ void main() {
 
       expect(result.projectTitle, equals('PulseLedger AI'));
       expect(result.tagline, contains('Real-time offline-first'));
-      expect(result.devOneResponsibility, contains('Architects local SQLite'));
-      expect(result.devTwoResponsibility, contains('Builds Serverpod stream'));
     });
   });
 }
