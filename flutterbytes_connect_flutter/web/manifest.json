@@ -1,11 +1,11 @@
 {
-    "name": "flutterbytes_connect",
-    "short_name": "flutterbytes_connect",
+    "name": "FlutterBytes Connect AI",
+    "short_name": "FlutterBytes",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#050E1F",
+    "theme_color": "#050E1F",
+    "description": "Real-time developer networking & AI hackathon matchmaking for FlutterBytes Conference 2026.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
