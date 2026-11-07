@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart' hide InputDecoration;
-import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:material_ui/material_ui.dart' show InputDecoration;
 
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/fbc_button.dart';
@@ -27,7 +25,13 @@ class ClaimCardModal extends StatefulWidget {
 }
 
 class _ClaimCardModalState extends State<ClaimCardModal> {
-  final _formKey = GlobalKey<FormBuilderState>();
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _roleController = TextEditingController();
+  final _skillsController = TextEditingController();
+  final _interestsController = TextEditingController();
+  final _githubController = TextEditingController();
+
   late final RegistrationController _controller;
 
   @override
@@ -38,19 +42,25 @@ class _ClaimCardModalState extends State<ClaimCardModal> {
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _roleController.dispose();
+    _skillsController.dispose();
+    _interestsController.dispose();
+    _githubController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final values = _formKey.currentState!.value;
+    if (_formKey.currentState?.validate() ?? false) {
       final success = await _controller.submitCard(
-        name: values['name'] as String,
-        role: values['role'] as String,
-        skillsRaw: values['skills'] as String,
-        interests: values['interests'] as String,
-        githubHandle: values['github'] as String?,
+        name: _nameController.text.trim(),
+        role: _roleController.text.trim(),
+        skillsRaw: _skillsController.text.trim(),
+        interests: _interestsController.text.trim(),
+        githubHandle: _githubController.text.trim().isEmpty
+            ? null
+            : _githubController.text.trim(),
       );
 
       if (success && mounted) {
@@ -83,7 +93,7 @@ class _ClaimCardModalState extends State<ClaimCardModal> {
       child: ValueListenableBuilder<RegistrationState>(
         valueListenable: _controller,
         builder: (context, state, _) {
-          return FormBuilder(
+          return Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,82 +105,97 @@ class _ClaimCardModalState extends State<ClaimCardModal> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.15),
                       borderRadius: FbcDecorations.borderRadiusMd,
-                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                      border: Border.all(
+                          color: Colors.redAccent.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       state.errorMessage!,
-                      style: FbcTypography.caption.copyWith(color: Colors.redAccent),
+                      style: FbcTypography.caption
+                          .copyWith(color: Colors.redAccent),
                     ),
                   ),
                 ],
 
                 // Full Name
-                FormBuilderTextField(
-                  name: 'name',
+                TextFormField(
+                  controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Full Name / Handle *',
                     hintText: 'e.g. Chioma Adeyemi',
-                    prefixIcon: Icon(Icons.person_outline, size: 18, color: FbcColors.muted),
+                    prefixIcon: Icon(Icons.person_outline,
+                        size: 18, color: FbcColors.muted),
                   ),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(errorText: 'Name is required'),
-                    FormBuilderValidators.maxLength(60, errorText: 'Max 60 characters'),
+                    FormBuilderValidators.required(
+                        errorText: 'Name is required'),
+                    FormBuilderValidators.maxLength(60,
+                        errorText: 'Max 60 characters'),
                   ]),
                 ),
                 const SizedBox(height: 16),
 
                 // Engineering Role
-                FormBuilderTextField(
-                  name: 'role',
+                TextFormField(
+                  controller: _roleController,
                   decoration: const InputDecoration(
                     labelText: 'Primary Role / Specialty *',
                     hintText: 'e.g. Staff Mobile Engineer, Backend Lead',
-                    prefixIcon: Icon(Icons.work_outline, size: 18, color: FbcColors.muted),
+                    prefixIcon: Icon(Icons.work_outline,
+                        size: 18, color: FbcColors.muted),
                   ),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(errorText: 'Role is required'),
-                    FormBuilderValidators.maxLength(60, errorText: 'Max 60 characters'),
+                    FormBuilderValidators.required(
+                        errorText: 'Role is required'),
+                    FormBuilderValidators.maxLength(60,
+                        errorText: 'Max 60 characters'),
                   ]),
                 ),
                 const SizedBox(height: 16),
 
                 // Core Skills
-                FormBuilderTextField(
-                  name: 'skills',
+                TextFormField(
+                  controller: _skillsController,
                   decoration: const InputDecoration(
                     labelText: 'Core Skills (Comma separated) *',
                     hintText: 'e.g. Flutter, Serverpod, Riverpod, Dart',
-                    prefixIcon: Icon(Icons.terminal, size: 18, color: FbcColors.muted),
+                    prefixIcon:
+                        Icon(Icons.terminal, size: 18, color: FbcColors.muted),
                   ),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(errorText: 'At least one skill is required'),
+                    FormBuilderValidators.required(
+                        errorText: 'At least one skill is required'),
                   ]),
                 ),
                 const SizedBox(height: 16),
 
                 // Interests / What you want to build
-                FormBuilderTextField(
-                  name: 'interests',
+                TextFormField(
+                  controller: _interestsController,
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Project Interests / What You Want to Build *',
-                    hintText: 'e.g. Building offline-first clinical AI note taking with Flutter & Serverpod.',
+                    hintText:
+                        'e.g. Building offline-first clinical AI note taking with Flutter & Serverpod.',
                     alignLabelWithHint: true,
                   ),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(errorText: 'Please share what you want to build'),
-                    FormBuilderValidators.maxLength(300, errorText: 'Max 300 characters'),
+                    FormBuilderValidators.required(
+                        errorText: 'Please share what you want to build'),
+                    FormBuilderValidators.maxLength(300,
+                        errorText: 'Max 300 characters'),
                   ]),
                 ),
                 const SizedBox(height: 16),
 
-                // GitHub Handle
-                FormBuilderTextField(
-                  name: 'github',
+                // GitHub Handle (optional)
+                TextFormField(
+                  controller: _githubController,
                   decoration: const InputDecoration(
                     labelText: 'GitHub Username (Optional)',
-                    hintText: 'e.g. chioma-dev (for avatar and profile link)',
-                    prefixIcon: Icon(Icons.code, size: 18, color: FbcColors.muted),
+                    hintText:
+                        'e.g. chioma-dev (for avatar and profile link)',
+                    prefixIcon:
+                        Icon(Icons.code, size: 18, color: FbcColors.muted),
                   ),
                 ),
                 const SizedBox(height: 24),
