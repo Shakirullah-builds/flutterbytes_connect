@@ -29,6 +29,8 @@ dependencies:
   cupertino_icons: ^1.0.5
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   google_fonts: ^8.1.0
   flutterbytes_connect_client:
     path: ../flutterbytes_connect_client
