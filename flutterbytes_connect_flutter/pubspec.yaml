@@ -34,6 +34,9 @@ dependencies:
     path: ../flutterbytes_connect_client
   serverpod_flutter: 4.1.1
   serverpod_auth_idp_flutter: 4.1.1
+  flutter_form_builder: ^11.0.0
+  form_builder_validators: ^11.3.0
+  material_ui: ^1.10.0
 
 dev_dependencies:
   # Used for agents to drive the app through the Dart MCP
