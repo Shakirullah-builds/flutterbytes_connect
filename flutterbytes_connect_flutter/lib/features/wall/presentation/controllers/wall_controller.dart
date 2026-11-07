@@ -39,6 +39,12 @@ class WallController extends ValueNotifier<WallState> {
     try {
       _streamSub = _repository.watchProfiles().listen(
         (newProfile) {
+          if (newProfile.id == -1 || newProfile.name == '__WALL_RESET__') {
+            // Live broadcast from presenter reset: wipe cards on all connected screens
+            value = value.copyWith(allProfiles: []);
+            return;
+          }
+
           final current = List<AttendeeProfile>.from(value.allProfiles);
           final existingIndex = current.indexWhere((p) => p.id == newProfile.id);
 
@@ -57,6 +63,19 @@ class WallController extends ValueNotifier<WallState> {
       );
     } catch (_) {
       // Stream fallback handling
+    }
+  }
+
+  /// Presenter reset: returns true if reset succeeded, false if passcode was incorrect
+  Future<bool> resetWall(String adminPassword) async {
+    try {
+      final success = await _repository.resetWall(adminPassword.trim());
+      if (success) {
+        value = value.copyWith(allProfiles: []);
+      }
+      return success;
+    } catch (_) {
+      return false;
     }
   }
 

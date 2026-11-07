@@ -128,6 +128,25 @@ class Endpoints extends _is.EndpointDispatch {
                     offset: params['offset'],
                   ),
         ),
+        'resetWall': _is.MethodConnector(
+          name: 'resetWall',
+          params: {
+            'adminKey': _is.ParameterDescription(
+              name: 'adminKey',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['attendee'] as _iyac4jpg.AttendeeEndpoint)
+                  .resetWall(
+                    session,
+                    adminKey: params['adminKey'],
+                  ),
+        ),
         'watchProfiles': _is.MethodStreamConnector(
           name: 'watchProfiles',
           params: {},

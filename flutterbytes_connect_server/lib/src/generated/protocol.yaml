@@ -2,6 +2,7 @@ attendee:
   - createProfile:
   - getProfiles:
   - watchProfiles:
+  - resetWall:
 emailIdp:
   - startOtpLogin:
   - verifyOtpLoginCode:

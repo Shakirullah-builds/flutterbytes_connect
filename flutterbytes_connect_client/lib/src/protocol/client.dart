@@ -77,6 +77,15 @@ class EndpointAttendee extends _isc.EndpointRef {
         {},
         {},
       );
+
+  /// Secure presenter reset: deletes all collaborative matches and attendee profiles,
+  /// then broadcasts a sentinel reset event across the live wall stream.
+  _ida.Future<bool> resetWall({required String adminKey}) =>
+      caller.callServerEndpoint<bool>(
+        'attendee',
+        'resetWall',
+        {'adminKey': adminKey},
+      );
 }
 
 /// By extending [EmailOtpIdpBaseEndpoint], the email identity provider

@@ -5,6 +5,7 @@ import '../../../client.dart';
 abstract class WallRepository {
   Future<List<AttendeeProfile>> fetchProfiles({int limit = 50, int offset = 0});
   Stream<AttendeeProfile> watchProfiles();
+  Future<bool> resetWall(String adminKey);
 }
 
 class ServerpodWallRepository implements WallRepository {
@@ -16,5 +17,10 @@ class ServerpodWallRepository implements WallRepository {
   @override
   Stream<AttendeeProfile> watchProfiles() {
     return client.attendee.watchProfiles();
+  }
+
+  @override
+  Future<bool> resetWall(String adminKey) async {
+    return await client.attendee.resetWall(adminKey: adminKey);
   }
 }

@@ -104,4 +104,46 @@ class AttendeeEndpoint extends Endpoint {
       ChannelConstants.wallChannel,
     );
   }
+
+  /// Secure presenter reset: deletes all collaborative matches and attendee profiles,
+  /// then broadcasts a sentinel reset event across the live wall stream.
+  Future<bool> resetWall(Session session, {required String adminKey}) async {
+    final configuredPin = session.serverpod.getPassword('adminResetPin');
+    if (configuredPin == null || configuredPin.isEmpty || adminKey.trim() != configuredPin.trim()) {
+      session.log('Presenter reset failed: invalid admin key.', level: LogLevel.warning);
+      return false;
+    }
+
+    try {
+      // 1. Delete all matches first
+      await CollabMatch.db.deleteWhere(session, where: (t) => Constant.bool(true));
+
+      // 2. Delete all attendee profiles
+      await AttendeeProfile.db.deleteWhere(session, where: (t) => Constant.bool(true));
+
+      // 3. Broadcast sentinel reset event to all connected wall subscribers
+      final resetSentinel = AttendeeProfile(
+        id: -1,
+        name: '__WALL_RESET__',
+        role: '',
+        skills: const [],
+        interests: '',
+        personaTitle: '',
+        bioHook: '',
+        avatarSeed: 0,
+        createdAt: DateTime.now(),
+      );
+
+      await session.messages.postMessage(
+        ChannelConstants.wallChannel,
+        resetSentinel,
+      );
+
+      session.log('Wall successfully reset for showcase with admin key.');
+      return true;
+    } catch (e, stack) {
+      session.log('Error executing wall reset: $e', level: LogLevel.error, stackTrace: stack);
+      return false;
+    }
+  }
 }

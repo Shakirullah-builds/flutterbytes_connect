@@ -8,11 +8,13 @@ import '../../../../core/widgets/radar_indicator.dart';
 class FloatingNavbar extends StatelessWidget {
   final int onlineCount;
   final VoidCallback onClaimCardPressed;
+  final VoidCallback? onLogoLongPress;
 
   const FloatingNavbar({
     super.key,
     required this.onlineCount,
     required this.onClaimCardPressed,
+    this.onLogoLongPress,
   });
 
   @override
@@ -22,7 +24,7 @@ class FloatingNavbar extends StatelessWidget {
         final isMobile = constraints.maxWidth < 560;
         final isVerySmall = constraints.maxWidth < 380;
 
-        Widget logoWidget = Image.asset(
+        Widget rawLogo = Image.asset(
           FbcAssets.logoDark,
           height: isMobile ? 22 : 24,
           errorBuilder: (context, error, stackTrace) => Row(
@@ -35,6 +37,14 @@ class FloatingNavbar extends StatelessWidget {
                 style: FbcTypography.h3.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
+          ),
+        );
+
+        Widget logoWidget = GestureDetector(
+          onLongPress: onLogoLongPress,
+          child: MouseRegion(
+            cursor: onLogoLongPress != null ? SystemMouseCursors.click : MouseCursor.defer,
+            child: rawLogo,
           ),
         );
 

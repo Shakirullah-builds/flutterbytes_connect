@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/fbc_button.dart';
 import '../../matchmaker/presentation/widgets/collaboration_modal.dart';
 import '../../registration/presentation/widgets/claim_card_modal.dart';
 import 'controllers/wall_controller.dart';
@@ -36,6 +37,175 @@ class _WallPageState extends State<WallPage> {
     ClaimCardModal.show(
       context,
       onCardCreated: () => _controller.init(),
+    );
+  }
+
+  void _showPresenterResetDialog() {
+    final passwordController = TextEditingController();
+    String? errorMessage;
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> submit() async {
+              final pin = passwordController.text.trim();
+              if (pin.isEmpty) {
+                setDialogState(() {
+                  errorMessage = 'Please enter your presenter PIN.';
+                });
+                return;
+              }
+
+              setDialogState(() {
+                isSubmitting = true;
+                errorMessage = null;
+              });
+
+              final messenger = ScaffoldMessenger.of(this.context);
+              final nav = Navigator.of(dialogContext);
+
+              final success = await _controller.resetWall(pin);
+
+              if (!mounted) return;
+
+              if (success) {
+                nav.pop();
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text('Demo reset complete! The wall is clean for your showcase.'),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFF10B981),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
+              } else {
+                setDialogState(() {
+                  isSubmitting = false;
+                  errorMessage = 'That passcode is incorrect. Please check your PIN and try again.';
+                });
+              }
+            }
+
+            return AlertDialog(
+              backgroundColor: FbcColors.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: FbcColors.border.withValues(alpha: 0.8)),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: FbcColors.blue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.lock_reset, color: FbcColors.sky, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Presenter Demo Reset',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
+                ],
+              ),
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Enter your passcode to wipe test cards and return the wall to a clean slate.',
+                      style: FbcTypography.bodyMuted.copyWith(fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      autofocus: true,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => submit(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Enter presenter PIN',
+                        hintStyle: TextStyle(
+                          color: FbcColors.muted.withValues(alpha: 0.6),
+                          fontSize: 13,
+                        ),
+                        filled: true,
+                        fillColor: FbcColors.navy,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: FbcColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: FbcColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: FbcColors.sky),
+                        ),
+                      ),
+                    ),
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline, size: 16, color: Color(0xFFFCA5A5)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel', style: TextStyle(color: FbcColors.muted)),
+                ),
+                FbcButton(
+                  label: 'Reset Wall',
+                  icon: Icons.delete_sweep_outlined,
+                  isLoading: isSubmitting,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  fontSize: 12,
+                  onPressed: isSubmitting ? null : submit,
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -234,6 +404,7 @@ class _WallPageState extends State<WallPage> {
                         child: FloatingNavbar(
                           onlineCount: state.totalCount,
                           onClaimCardPressed: _openClaimCard,
+                          onLogoLongPress: _showPresenterResetDialog,
                         ),
                       ),
                     ),

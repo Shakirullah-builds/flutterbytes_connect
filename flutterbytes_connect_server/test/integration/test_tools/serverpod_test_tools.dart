@@ -316,6 +316,37 @@ class _AttendeeEndpoint {
     );
     return _localTestStreamManager.outputStreamController.stream;
   }
+
+  _ida.Future<bool> resetWall(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required String adminKey,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'attendee',
+            method: 'resetWall',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'attendee',
+          methodName: 'resetWall',
+          parameters: _ist.testObjectToJson({'adminKey': adminKey}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _EmailIdpEndpoint {
