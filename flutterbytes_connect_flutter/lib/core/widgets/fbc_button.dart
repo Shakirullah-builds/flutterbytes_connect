@@ -9,6 +9,8 @@ class FbcButton extends StatelessWidget {
   final bool isLoading;
   final bool isOutlined;
   final double? width;
+  final EdgeInsetsGeometry? padding;
+  final double? fontSize;
 
   const FbcButton({
     super.key,
@@ -18,10 +20,17 @@ class FbcButton extends StatelessWidget {
     this.isLoading = false,
     this.isOutlined = false,
     this.width,
+    this.padding,
+    this.fontSize,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveTextStyle = FbcTypography.buttonText.copyWith(
+      color: isOutlined ? FbcColors.sky : Colors.white,
+      fontSize: fontSize ?? 13,
+    );
+
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -37,13 +46,15 @@ class FbcButton extends StatelessWidget {
           )
         else ...[
           if (icon != null) ...[
-            Icon(icon, size: 16, color: isOutlined ? FbcColors.sky : Colors.white),
-            const SizedBox(width: 8),
+            Icon(icon, size: (fontSize ?? 13) + 2, color: isOutlined ? FbcColors.sky : Colors.white),
+            const SizedBox(width: 6),
           ],
-          Text(
-            label,
-            style: FbcTypography.buttonText.copyWith(
-              color: isOutlined ? FbcColors.sky : Colors.white,
+          Flexible(
+            child: Text(
+              label,
+              style: effectiveTextStyle,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -60,7 +71,7 @@ class FbcButton extends StatelessWidget {
             shape: const RoundedRectangleBorder(
               borderRadius: FbcDecorations.borderRadiusFull,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+            padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           ),
           child: content,
         ),
@@ -80,7 +91,7 @@ class FbcButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: FbcColors.blue,
           disabledBackgroundColor: FbcColors.blue.withValues(alpha: 0.5),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           shape: const RoundedRectangleBorder(
             borderRadius: FbcDecorations.borderRadiusFull,
           ),

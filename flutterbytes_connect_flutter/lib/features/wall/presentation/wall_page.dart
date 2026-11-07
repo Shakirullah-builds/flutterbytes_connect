@@ -41,6 +41,9 @@ class _WallPageState extends State<WallPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Scaffold(
       backgroundColor: FbcColors.navy,
       body: ValueListenableBuilder<WallState>(
@@ -51,11 +54,19 @@ class _WallPageState extends State<WallPage> {
               // Top Floating Navbar
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 10),
+                  padding: EdgeInsets.only(
+                    top: isMobile ? 12 : 20,
+                    left: isMobile ? 12 : 20,
+                    right: isMobile ? 12 : 20,
+                    bottom: 10,
+                  ),
                   child: Center(
-                    child: FloatingNavbar(
-                      onlineCount: state.totalCount,
-                      onClaimCardPressed: _openClaimCard,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      child: FloatingNavbar(
+                        onlineCount: state.totalCount,
+                        onClaimCardPressed: _openClaimCard,
+                      ),
                     ),
                   ),
                 ),
@@ -64,7 +75,10 @@ class _WallPageState extends State<WallPage> {
               // Hero Telemetry Section
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : 24,
+                    vertical: 16,
+                  ),
                   child: HeroTelemetry(totalBuilders: state.totalCount),
                 ),
               ),
@@ -72,7 +86,10 @@ class _WallPageState extends State<WallPage> {
               // Search & Skill Filters
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : 24,
+                    vertical: 16,
+                  ),
                   child: SkillFilterBar(
                     selectedFilter: state.selectedFilter,
                     onFilterChanged: (filter) => _controller.setFilter(filter),
@@ -158,7 +175,10 @@ class _WallPageState extends State<WallPage> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : 24,
+                    vertical: 20,
+                  ),
                   sliver: SliverLayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.crossAxisExtent;
@@ -169,13 +189,14 @@ class _WallPageState extends State<WallPage> {
                               : 3;
 
                       final profiles = state.filteredProfiles;
+                      final double mainAxisExtent = width < 480 ? 326 : 310;
 
                       return SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
                           crossAxisSpacing: 18,
                           mainAxisSpacing: 18,
-                          mainAxisExtent: 310,
+                          mainAxisExtent: mainAxisExtent,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
