@@ -18,6 +18,12 @@ pubspec_overrides.yaml
 .codex/
 .mcp.json
 
+# IDE/Version Control Files
+.idea/
+AGENTS.md
+.vscode/
+.github/
+
 # Serverpod Cloud CLI
 .scloud/
 .DS_Store
