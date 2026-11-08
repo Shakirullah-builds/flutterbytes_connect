@@ -1,3 +1,8 @@
+attendee:
+  - createProfile:
+  - getProfiles:
+  - watchProfiles:
+  - resetWall:
 emailIdp:
   - startOtpLogin:
   - verifyOtpLoginCode:
@@ -15,3 +20,6 @@ jwtRefresh:
   - refreshAccessToken:
 greeting:
   - hello:
+match:
+  - generatePitch:
+  - getRecentMatches:

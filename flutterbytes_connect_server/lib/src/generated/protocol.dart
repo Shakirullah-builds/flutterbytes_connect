@@ -11,14 +11,22 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:flutterbytes_connect_server/src/generated/attendees/attendee_profile.dart'
+    as _i4bygp24;
+import 'package:flutterbytes_connect_server/src/generated/matches/collab_match.dart'
+    as _i0kj7irz;
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import 'attendees/attendee_profile.dart' as _i8fwt9bw;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'matches/collab_match.dart' as _ifq58cmo;
+export 'attendees/attendee_profile.dart';
 export 'greetings/greeting.dart';
+export 'matches/collab_match.dart';
 
 class Protocol extends _is.DatabaseSerializationManager
     implements _is.DatabaseProtocolDeserializationProvider {
@@ -33,18 +41,174 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.ProtocolDeserialization.cached(
         this,
         types: const [
+          _is.getType<_i8fwt9bw.AttendeeProfile>,
           _is.getType<_izw8z7ou.Greeting>,
+          _is.getType<_ifq58cmo.CollabMatch>,
+          _is.getType<_i8fwt9bw.AttendeeProfile?>,
           _is.getType<_izw8z7ou.Greeting?>,
+          _is.getType<_ifq58cmo.CollabMatch?>,
+          _is.getType<List<String>>,
+          _is.getType<List<String>>,
+          _is.getType<List<_i4bygp24.AttendeeProfile>>,
+          _is.getType<List<_i0kj7irz.CollabMatch>>,
         ],
         modules: const [
           _iais.Protocol.new,
           _iacs.Protocol.new,
           _isp.Protocol.new,
         ],
-        classNames: const ['Greeting'],
+        classNames: const [
+          'AttendeeProfile',
+          'Greeting',
+          'CollabMatch',
+        ],
       );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    _isp.TableDefinition(
+      name: 'attendee_profile',
+      dartName: 'AttendeeProfile',
+      schema: 'public',
+      module: 'flutterbytes_connect',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'name',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'role',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'skills',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<String>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'interests',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'githubHandle',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'personaTitle',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'bioHook',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'avatarSeed',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'collab_match',
+      dartName: 'CollabMatch',
+      schema: 'public',
+      module: 'flutterbytes_connect',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'devOneId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'devTwoId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'devOneName',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'devTwoName',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'projectTitle',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'tagline',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'devOneResponsibility',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'devTwoResponsibility',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [],
+      managed: true,
+    ),
     ..._iais.Protocol.targetTableDefinitions,
     ..._iacs.Protocol.targetTableDefinitions,
     ..._isp.Protocol.targetTableDefinitions,
@@ -74,11 +238,42 @@ class Protocol extends _is.DatabaseSerializationManager
       }
     }
 
+    if (t == _i8fwt9bw.AttendeeProfile) {
+      return _i8fwt9bw.AttendeeProfile.fromJson(data) as T;
+    }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _ifq58cmo.CollabMatch) {
+      return _ifq58cmo.CollabMatch.fromJson(data) as T;
+    }
+    if (t == _is.getType<_i8fwt9bw.AttendeeProfile?>()) {
+      return (data != null ? _i8fwt9bw.AttendeeProfile.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ifq58cmo.CollabMatch?>()) {
+      return (data != null ? _ifq58cmo.CollabMatch.fromJson(data) : null) as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<_i4bygp24.AttendeeProfile>) {
+      return (data as List)
+              .map((e) => deserialize<_i4bygp24.AttendeeProfile>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i0kj7irz.CollabMatch>) {
+      return (data as List)
+              .map((e) => deserialize<_i0kj7irz.CollabMatch>(e))
+              .toList()
+          as T;
     }
     final modules = deserializationMetadata.modulesForDeserialization(
       t,
@@ -95,7 +290,9 @@ class Protocol extends _is.DatabaseSerializationManager
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _i8fwt9bw.AttendeeProfile => 'AttendeeProfile',
       _izw8z7ou.Greeting => 'Greeting',
+      _ifq58cmo.CollabMatch => 'CollabMatch',
       _ => null,
     };
   }
@@ -113,8 +310,12 @@ class Protocol extends _is.DatabaseSerializationManager
     }
 
     switch (data) {
+      case _i8fwt9bw.AttendeeProfile():
+        return 'AttendeeProfile';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _ifq58cmo.CollabMatch():
+        return 'CollabMatch';
     }
     className = _iais.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -141,8 +342,14 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'AttendeeProfile') {
+      return deserialize<_i8fwt9bw.AttendeeProfile>(data['data']);
+    }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'CollabMatch') {
+      return deserialize<_ifq58cmo.CollabMatch>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       return _iais.Protocol().deserializeByClassName({
@@ -189,6 +396,12 @@ class Protocol extends _is.DatabaseSerializationManager
       if (table != null) {
         return table;
       }
+    }
+    switch (t) {
+      case _i8fwt9bw.AttendeeProfile:
+        return _i8fwt9bw.AttendeeProfile.t;
+      case _ifq58cmo.CollabMatch:
+        return _ifq58cmo.CollabMatch.t;
     }
     return null;
   }

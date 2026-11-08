@@ -15,14 +15,22 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import '../attendees/attendee_endpoint.dart' as _iyac4jpg;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
+import '../matches/match_endpoint.dart' as _iln3e0ua;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'attendee': _iyac4jpg.AttendeeEndpoint()
+        ..initialize(
+          server,
+          'attendee',
+          null,
+        ),
       'emailIdp': _iuc1hd5t.EmailIdpEndpoint()
         ..initialize(
           server,
@@ -41,7 +49,119 @@ class Endpoints extends _is.EndpointDispatch {
           'greeting',
           null,
         ),
+      'match': _iln3e0ua.MatchEndpoint()
+        ..initialize(
+          server,
+          'match',
+          null,
+        ),
     };
+    connectors['attendee'] = _is.EndpointConnector(
+      name: 'attendee',
+      endpoint: endpoints['attendee']!,
+      methodConnectors: {
+        'createProfile': _is.MethodConnector(
+          name: 'createProfile',
+          params: {
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'role': _is.ParameterDescription(
+              name: 'role',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'skills': _is.ParameterDescription(
+              name: 'skills',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+            'interests': _is.ParameterDescription(
+              name: 'interests',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'githubHandle': _is.ParameterDescription(
+              name: 'githubHandle',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['attendee'] as _iyac4jpg.AttendeeEndpoint)
+                  .createProfile(
+                    session,
+                    name: params['name'],
+                    role: params['role'],
+                    skills: params['skills'],
+                    interests: params['interests'],
+                    githubHandle: params['githubHandle'],
+                  ),
+        ),
+        'getProfiles': _is.MethodConnector(
+          name: 'getProfiles',
+          params: {
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _is.ParameterDescription(
+              name: 'offset',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['attendee'] as _iyac4jpg.AttendeeEndpoint)
+                  .getProfiles(
+                    session,
+                    limit: params['limit'],
+                    offset: params['offset'],
+                  ),
+        ),
+        'resetWall': _is.MethodConnector(
+          name: 'resetWall',
+          params: {
+            'adminKey': _is.ParameterDescription(
+              name: 'adminKey',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['attendee'] as _iyac4jpg.AttendeeEndpoint)
+                  .resetWall(
+                    session,
+                    adminKey: params['adminKey'],
+                  ),
+        ),
+        'watchProfiles': _is.MethodStreamConnector(
+          name: 'watchProfiles',
+          params: {},
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['attendee'] as _iyac4jpg.AttendeeEndpoint)
+                  .watchProfiles(session),
+        ),
+      },
+    );
     connectors['emailIdp'] = _is.EndpointConnector(
       name: 'emailIdp',
       endpoint: endpoints['emailIdp']!,
@@ -357,6 +477,56 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['greeting'] as _il624ik7.GreetingEndpoint).hello(
                     session,
                     params['name'],
+                  ),
+        ),
+      },
+    );
+    connectors['match'] = _is.EndpointConnector(
+      name: 'match',
+      endpoint: endpoints['match']!,
+      methodConnectors: {
+        'generatePitch': _is.MethodConnector(
+          name: 'generatePitch',
+          params: {
+            'devOneId': _is.ParameterDescription(
+              name: 'devOneId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'devTwoId': _is.ParameterDescription(
+              name: 'devTwoId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['match'] as _iln3e0ua.MatchEndpoint).generatePitch(
+                    session,
+                    devOneId: params['devOneId'],
+                    devTwoId: params['devTwoId'],
+                  ),
+        ),
+        'getRecentMatches': _is.MethodConnector(
+          name: 'getRecentMatches',
+          params: {
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['match'] as _iln3e0ua.MatchEndpoint)
+                  .getRecentMatches(
+                    session,
+                    limit: params['limit'],
                   ),
         ),
       },

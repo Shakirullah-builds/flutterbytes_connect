@@ -1,0 +1,12 @@
+class: CollabMatch
+table: collab_match
+fields:
+  devOneId: int
+  devTwoId: int
+  devOneName: String
+  devTwoName: String
+  projectTitle: String
+  tagline: String
+  devOneResponsibility: String
+  devTwoResponsibility: String
+  createdAt: DateTime

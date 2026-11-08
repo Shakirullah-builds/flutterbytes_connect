@@ -29,11 +29,14 @@ dependencies:
   cupertino_icons: ^1.0.5
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   google_fonts: ^8.1.0
   flutterbytes_connect_client:
     path: ../flutterbytes_connect_client
   serverpod_flutter: 4.1.1
   serverpod_auth_idp_flutter: 4.1.1
+  form_builder_validators: ^11.3.0
 
 dev_dependencies:
   # Used for agents to drive the app through the Dart MCP
@@ -69,6 +72,7 @@ flutter:
   # https://flutter.dev/assets-and-images/#from-packages
   assets:
     - assets/config.json
+    - assets/images/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

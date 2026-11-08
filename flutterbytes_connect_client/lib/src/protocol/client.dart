@@ -11,8 +11,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:flutterbytes_connect_client/src/protocol/attendees/attendee_profile.dart'
+    as _it2yx83z;
 import 'package:flutterbytes_connect_client/src/protocol/greetings/greeting.dart'
     as _imjvrv2g;
+import 'package:flutterbytes_connect_client/src/protocol/matches/collab_match.dart'
+    as _i48r58af;
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
@@ -20,6 +24,69 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
+
+/// Serverpod endpoint managing attendee profiles and real-time live wall feeds.
+/// {@category Endpoint}
+class EndpointAttendee extends _isc.EndpointRef {
+  EndpointAttendee(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'attendee';
+
+  /// Creates a new attendee profile, synthesizes an AI persona, saves to DB,
+  /// and broadcasts the new card to all connected live wall clients.
+  _ida.Future<_it2yx83z.AttendeeProfile> createProfile({
+    required String name,
+    required String role,
+    required List<String> skills,
+    required String interests,
+    String? githubHandle,
+  }) => caller.callServerEndpoint<_it2yx83z.AttendeeProfile>(
+    'attendee',
+    'createProfile',
+    {
+      'name': name,
+      'role': role,
+      'skills': skills,
+      'interests': interests,
+      'githubHandle': githubHandle,
+    },
+  );
+
+  /// Fetches attendee profiles ordered by newest first.
+  _ida.Future<List<_it2yx83z.AttendeeProfile>> getProfiles({
+    required int limit,
+    required int offset,
+  }) => caller.callServerEndpoint<List<_it2yx83z.AttendeeProfile>>(
+    'attendee',
+    'getProfiles',
+    {
+      'limit': limit,
+      'offset': offset,
+    },
+  );
+
+  /// Modern Serverpod 4 method stream: yields new profiles as they are created.
+  _ida.Stream<_it2yx83z.AttendeeProfile> watchProfiles() =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_it2yx83z.AttendeeProfile>,
+        _it2yx83z.AttendeeProfile
+      >(
+        'attendee',
+        'watchProfiles',
+        {},
+        {},
+      );
+
+  /// Secure presenter reset: deletes all collaborative matches and attendee profiles,
+  /// then broadcasts a sentinel reset event across the live wall stream.
+  _ida.Future<bool> resetWall({required String adminKey}) =>
+      caller.callServerEndpoint<bool>(
+        'attendee',
+        'resetWall',
+        {'adminKey': adminKey},
+      );
+}
 
 /// By extending [EmailOtpIdpBaseEndpoint], the email identity provider
 /// endpoints, including the passwordless sign-in with one-time passwords, are
@@ -365,6 +432,37 @@ class EndpointGreeting extends _isc.EndpointRef {
       );
 }
 
+/// Serverpod endpoint managing collaborative matchmaking between attendees.
+/// {@category Endpoint}
+class EndpointMatch extends _isc.EndpointRef {
+  EndpointMatch(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'match';
+
+  /// Generates an AI-powered hackathon project synergy between two attendees.
+  _ida.Future<_i48r58af.CollabMatch> generatePitch({
+    required int devOneId,
+    required int devTwoId,
+  }) => caller.callServerEndpoint<_i48r58af.CollabMatch>(
+    'match',
+    'generatePitch',
+    {
+      'devOneId': devOneId,
+      'devTwoId': devTwoId,
+    },
+  );
+
+  /// Retrieves recent collaborative matches.
+  _ida.Future<List<_i48r58af.CollabMatch>> getRecentMatches({
+    required int limit,
+  }) => caller.callServerEndpoint<List<_i48r58af.CollabMatch>>(
+    'match',
+    'getRecentMatches',
+    {'limit': limit},
+  );
+}
+
 class Modules {
   Modules(Client client) {
     serverpod_auth_idp = _iaic.Caller(client);
@@ -403,11 +501,15 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    attendee = EndpointAttendee(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     greeting = EndpointGreeting(this);
+    match = EndpointMatch(this);
     modules = Modules(this);
   }
+
+  late final EndpointAttendee attendee;
 
   late final EndpointEmailIdp emailIdp;
 
@@ -415,13 +517,17 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointGreeting greeting;
 
+  late final EndpointMatch match;
+
   late final Modules modules;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'attendee': attendee,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'greeting': greeting,
+    'match': match,
   };
 
   @override
