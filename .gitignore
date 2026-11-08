@@ -22,7 +22,6 @@ pubspec_overrides.yaml
 .idea/
 AGENTS.md
 .vscode/
-.github/
 
 # Serverpod Cloud CLI
 .scloud/
